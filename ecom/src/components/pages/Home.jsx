@@ -1,10 +1,14 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useContext,  useEffect, useState } from "react";
 import ResponsivePagination from "react-responsive-pagination";
 import Loading from "../common/Loading";
 import { Link } from "react-router";
+import { cartContext } from "../../MainContext";
+import { ToastContainer, toast } from "react-toastify";
 
 export default function Home() {
+
+   let {count,setCount}=useContext(cartContext)
   let [categoryData, setCategoryData] = useState([]);
   let [brandData, setBrandData] = useState([]);
 
@@ -65,8 +69,7 @@ export default function Home() {
   };
 
   let getProduct = async () => {
-
-    setLoading(true)
+    setLoading(true);
 
     let apiRes = await axios.get(
       `https://wscubetech.co/ecommerce-api/products.php`,
@@ -87,7 +90,7 @@ export default function Home() {
     settotalpages(total_pages);
 
     setproducts(data);
-    setLoading(false)
+    setLoading(false);
 
     // axios.post( apiUrl,data )
   };
@@ -103,10 +106,12 @@ export default function Home() {
 
   return (
     <section className="mt-10">
+      <ToastContainer />
       <div className="max-w-[1320px] mx-auto grid grid-cols-[20%_auto] gap-5">
         <aside className="border-1">
           <h1 class="text-4xl p-3 font-bold tracking-tight text-gray-900">
             New Arrivals
+            <button onClick={()=>setCount(count+1)}>Change Count</button>
           </h1>
 
           <div className="border-1 p-5 h-[300px] overflow-y-scroll">
@@ -303,10 +308,29 @@ export default function Home() {
 }
 
 function ProductCard({ data }) {
-  let { image, name, price, rating,slug } = data;
+  let { image, id, name, price, rating, slug } = data;
+
+  let { cart, setCart } = useContext(cartContext);
+
+  let addtoCart = () => {
+    let cartObj = {
+      id,
+      name,
+      image,
+      price,
+      qty: 1,
+    };
+    //  console.log(cartObj);
+    setCart([...cart, cartObj]);
+    toast.success("Product Added To Cart");
+  };
+
+  let checkMyProductCart = cart.find((obj) => obj.id == id); //166
+
   return (
-    <figure className="shadow-lg">
-      <Link to={ `/product/${slug}`}>
+    <figure className="shadow-lg p-2">
+      <Link to={`/product/${slug}`}>
+        {id}
         <img src={image} alt="" />
         <div className="p-2">
           <h3 className="font-bold text-xl">{name}</h3>
@@ -314,6 +338,14 @@ function ProductCard({ data }) {
           <p> {rating}</p>
         </div>
       </Link>
+      {
+      checkMyProductCart ? (
+        <button className="p-2 bg-red-500">Delete Cart</button>
+      ) : (
+        <button onClick={addtoCart} className="bg-green-400 p-2 cursor-pointer">
+          Add To Cart
+        </button>
+      )}
     </figure>
   );
 }
